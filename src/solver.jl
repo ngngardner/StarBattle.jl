@@ -1,6 +1,8 @@
 
 include("struct.jl")
 
+_NORMAL_SELECT = true
+
 """
 Return the number of cells in a group.
 """
@@ -54,7 +56,6 @@ function update_regions!(regions::Dict, cells::Array{Cell, 2})
 	end
 end
 
-
 function illegal(regions, k)
 	to_check = [regions["rows"] regions["cols"] regions["groups"]]
 	for region in to_check
@@ -72,59 +73,82 @@ function block!(cells, regions, k::Int)
 	
 	for star in stars
 		b = cells[star]
+
+		check_row = regions["rows"][b.row].stars ≥ k
+		check_col = regions["cols"][b.col].stars ≥ k
+		check_groups = regions["groups"][b.group].stars ≥ k
 		
 		# adjacent
-		check_points = findall(a -> sqrt((a.row - b.row)^2+(a.col - b.col)^2) < 2, cells)
-		for p in check_points
-			if p ∉ blocked
-				push!(blocked, p)
-			end
-		end
-		
-		# rows
-		if regions["rows"][b.row].stars ≥ k
-			check_points = findall(a -> a.row == b.row, cells)
-			for p in check_points
-				if p ∉ blocked
-					push!(blocked, p)
-				end
-			end
-		end
-		
-		# columns
-		if regions["cols"][b.col].stars ≥ k
-			check_points = findall(a -> a.col == b.col, cells)
-			for p in check_points
-				if p ∉ blocked
-					push!(blocked, p)
-				end
-			end
-		end
-
-		# groups
-		if regions["groups"][b.group].stars ≥ k
-			check_points = findall(a -> a.group == b.group, cells)
-			for p in check_points
-				if p ∉ blocked
-					push!(blocked, p)
-				end
-			end
-		end
+		check_points = findall(
+			a -> !a.is_star 
+				&& ((check_row && a.row == b.row)			  	     # row
+					|| (check_col && a.col == b.col)     		 	 # col
+					|| (check_groups && a.group == b.group) 	 	 # group
+					|| sqrt((a.row - b.row)^2+(a.col - b.col)^2) < 2 # adjacent
+			), cells)
+		blocked = cat(blocked, check_points, dims=1)
 	end
 	
-	for coor in blocked
-		if !cells[coor].is_star
-			cells[coor].is_blocked = true
-		end
+	for coor in unique(blocked)
+		cells[coor].is_blocked = true
 	end
 
 	update_regions!(regions, cells)
 end
 
-function place_star!(cells::Array{Cell}, regions)
+function smallest_region(regions)
+	d = size(regions["rows"], 1)
+
+	region_type = nothing
+	min_region = nothing
+	min_size = d*d
+
+	for i in 1:d
+		row_candidates = regions["rows"][i].candidates
+		if 0 < row_candidates < min_size
+			region_type = "rows"
+			min_region = i
+			min_size = row_candidates
+		end
+		
+		col_candidates = regions["cols"][i].candidates
+		if 0 < col_candidates < min_size
+			region_type = "cols"
+			min_region = i
+			min_size = col_candidates
+		end
+
+		group_candidates = regions["groups"][i].candidates
+		if 0 < group_candidates < min_size
+			region_type = "groups"
+			min_region = i
+			min_size = group_candidates
+		end
+	end
+
+	return min_region, region_type
+end
+
+function place_star!(cells::Array{Cell}, regions, normal_select)
 	d, n = size(cells)
+
+	idx = nothing
 	
-	idx = findfirst(x -> !(x.is_blocked || x.is_star), cells)
+	if normal_select
+		idx = findfirst(x -> !(x.is_blocked || x.is_star), cells)	
+	else
+		region, type = smallest_region(regions)
+		if type == "rows"
+			idx = findfirst(x -> !(x.is_blocked || x.is_star)
+				&& x.row == region, cells)
+		elseif type == "cols"
+			idx = findfirst(x -> !(x.is_blocked || x.is_star)
+				&& x.col == region, cells)
+		elseif type == "groups"
+			idx = findfirst(x -> !(x.is_blocked || x.is_star)
+				&& x.group == region, cells)
+		end
+	end
 
 	if !isnothing(idx)
 		cells[idx].is_star = true
@@ -132,24 +156,28 @@ function place_star!(cells::Array{Cell}, regions)
 		return cells[idx]
 	end
 
-	throw(ArgumentError("could not find an available cell"))
+	# throw(ArgumentError("could not find an available cell"))
 	return 
 end
 
-function solve(puzzle, k; logging::Bool=false)
+struct StarBattleResult
+	cells::Union{Nothing, Array{Cell, 2}}
+	steps::Int
+end
+
+function solve(puzzle::Array{Int, 2}, k::Int; normal_select::Bool=_NORMAL_SELECT, logging::Bool=false)
 	d, n = size(puzzle)
 
 	if logging
 		println("$k-star $n x $n puzzle")
 	end
 
-	cells = Array{Cell}(undef, d, d)
 	regions = Dict{String,Array}(
 		"rows" => Vector{Region}(undef, d),
 		"cols" => Vector{Region}(undef, d),
 		"groups" => Vector{Region}(undef, d),
 	)
-	
+	cells = Array{Cell}(undef, d, d)
 	fill_cells!(cells, puzzle)
 	fill_regions!(regions, cells)
 
@@ -158,17 +186,19 @@ function solve(puzzle, k; logging::Bool=false)
 	while true
 		steps += 1
 		if size(get_stars(cells), 1) == k*d
-			if logging
-				println("found solution in $steps steps")
-			end
-			return cells
+			return StarBattleResult(cells, steps)
 			break
 		elseif !illegal(regions, k)
-			cell = place_star!(cells, regions)
-			block!(cells, regions, k)
-			insert!(n, cells, cell)
-			n = n.children[end]
-			cells = deepcopy(n.data)
+			cell = place_star!(cells, regions, normal_select)
+			if !isnothing(cell)
+				block!(cells, regions, k)
+				insert!(n, cells, cell)
+				n = n.children[end]
+				cells = deepcopy(n.data)
+			else
+				return StarBattleResult(nothing, steps)
+				break
+			end
 		elseif !isnothing(n.parent)
 			bad_cell = n.cell
 			n = n.parent
@@ -178,10 +208,7 @@ function solve(puzzle, k; logging::Bool=false)
 			cells = deepcopy(n.data)
 			update_regions!(regions, cells)
 		else
-			if logging
-				println("found solution in $steps steps")
-			end
-			return cells
+			return StarBattleResult(nothing, steps)
 			break
 		end
 	end
