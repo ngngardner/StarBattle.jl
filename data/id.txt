@@ -1,0 +1,12 @@
+1-star 5x5 normal
+puzzle1
+
+1-star 8x8 hard
+puzzle2
+puzzle3: 6,821,181
+
+2-star 10x10 hard
+puzzle4: 4,659,714
+
+3-star 14x14 hard
+puzzle5: 4,177,734

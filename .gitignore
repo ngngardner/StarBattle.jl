@@ -2,3 +2,6 @@
 *.jl.cov
 *.jl.mem
 /docs/build/
+.vscode
+notebook.jl
+app.jl

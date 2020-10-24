@@ -1,5 +1,5 @@
 module StarBattle
+    include("solver.jl")
 
-# Write your package code here.
-
+    export solve
 end
