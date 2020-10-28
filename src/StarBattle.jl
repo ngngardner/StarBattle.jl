@@ -1,5 +1,5 @@
 module StarBattle
-    using Combinatorics
+    # using Combinatorics
 
     include("solver.jl")
 
