@@ -1,0 +1,109 @@
+\documentclass{article}
+
+\newcommand\tab[1][0.5cm]{\hspace*{#1}}
+
+\begin{document}
+ALGORITHM SolveStarBattle(P[0... n-1, 0...n-1], k) \\
+//Inputs: A k-star n-by-n Star Battle Puzzle as an array \\
+//  with numbers 0 through n-1 denoting which group the  \\
+//  cell belongs to. \\
+//Output: Solution S, an array with -1 for empty cells and \\
+//  1 for cells which contain stars. \\ \\
+// stores a tuple with (numCandiates, numStars) \\
+Regions = Dict( \\
+\tab Rows: Tuple[0...n-1], \\
+\tab Cols: Tuple[0...n-1], \\
+\tab Groups: Tuple[0...n-1], \\
+) \\ \\
+// stores a tuple with (row, column, group, isStar, isBlocked) \\
+Cells = Tuple[0...n-1] \\
+G = GroupCells(P) \\
+for i = 0 to n-1 \\
+\tab Regions[Rows][i] = (n, 0) \\
+\tab Regions[Cols][i] = (n, 0) \\
+\tab Regions[Groups][i] = (G[i], 0) \\
+\tab for j = 0 to n-1 \\
+\tab\tab Cells[i, j] = (i, j, P[i, j], false, false) \\
+
+//Create root node of backtracking tree \\
+//Each node stores all cells and the last placed cell \\
+n = Node(cells=Cells, cell=None) \\
+while True do \\
+\tab if size(cell.isStar for cell in Cells) == k*n \\
+\tab\tab return Cells \\
+\tab else if not isIllegal(Cells) \\
+\tab\tab cell = placeStar(Cells, Regions) \\
+\tab\tab Cells = blockCells(Cells, Regions, k)
+\tab\tab //set most recent child to newly placed star \\
+\tab\tab n.children[-1] = Node(cells=Cells, cell=Cell) \\
+\tab\tab n = n.children[-1] //move to new child node \\
+\tab\tab Cells = n.cells \\
+\tab else if n.parent not None \\
+\tab\tab badCell = n.cell \\
+\tab\tab n = n.parent \\
+\tab\tab n.cell[badCell.row, badCell.col].isBlocked = True \\
+\tab\tab n.cell[badCell.row, badCell.col].isStar = False \\
+\tab\tab Cells = n.cells \\
+\tab else \\
+\tab\tab return None //failed to find solution \\
+
+
+FUNCTION GroupCells(P[0...n-1, 0..n-1]) \\
+//Inputs: A k-star n-by-n Star Battle Puzzle as an array \\
+//  with numbers 0 through n-1 denoting which group the  \\
+//  cell belongs to. \\
+//Outputs: G[0...n-1] with values equal to the number of cells per group \\
+G[0...n-1] = 0 \\
+for i = 0 to n-1 \\
+\tab for j = 0 to n-1 \\
+\tab\tab G[P[i, j]] += 1 \\
+return G \\
+
+
+FUNCTION isIllegal(C, R, k) \\
+//Inputs: C - a list of cell objects \\
+//  R - a dict with row, column, and group data \\
+//  k - number of stars per region \\
+//Outputs: True if the current placement of cells is illegal, otherwise false \\
+for region in [R[Rows], R[Cols], R[Groups]] do \\
+\tab if region.numCandiates $<$ (k - region.numStars) \\
+\tab\tab return True \\
+return False \\
+
+
+FUNCTION placeStar(C, R) \\
+//Inputs: C - a list of cell objects \\
+//  R - a dict with row, column, and group data \\
+//Outputs: The Cell where the new star should be placed \\
+// find the region with the smallest number of available candidates \\
+minCandidates = $\infty$ \\
+target = None \\
+for region in [Rows, Cols, Groups] do \\
+\tab if 0 $<$ R[region].numCandiates $<$ minCandidates \\
+\tab\tab minCandidates = R[region].numCandiates \\
+\tab\tab target = region \\
+for cell in C \\
+\tab if !(cell.isBlocked or cell.isStar) and cell.target == R[target]\\
+\tab\tab return cell \\
+
+FUNCTION blockCells(C, R, k) \\
+//Inputs: C - a list of cell objects \\
+//  R - a dict with row, column, and group data \\
+//  k - number of stars per region \\
+//Outputs: Returns C with cells that are not a part of solution blocked \\
+stars = [cell.isStar for cell in Cells] \\
+for star in stars \\
+\tab checkRow = R[Rows][star.row].stars $>=$ k \\
+\tab checkCol = R[Cols][star.col].stars $>=$ k \\
+\tab checkGroups = R[Groups][star.group].stars $>=$ k \\
+\tab for cell in cells \\
+\tab\tab if !cell.isStar \\
+\tab\tab\tab if (checkRow and cell.row == star.row) \\
+\tab\tab\tab\tab\tab or (checkCol and cell.col == star.row) \\
+\tab\tab\tab\tab\tab or (checkGroup and cell.group = star.group) \\
+\tab\tab\tab\tab\tab or $sqrt((cell.row - star.row)^2 + (cell.col - star.col)^2
+    < 2)$ \\
+\tab\tab\tab\tab cell.isBlocked = True
+
+
+\end{document}
