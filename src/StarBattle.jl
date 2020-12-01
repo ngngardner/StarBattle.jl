@@ -1,7 +1,11 @@
 module StarBattle
-    # using Combinatorics
 
-    include("solver.jl")
+using Parameters
+using SimpleGraphs
+using SimpleGraphAlgorithms
 
-    export solve
+include("graph.jl")
+
+export solve, graph_solve
+
 end
