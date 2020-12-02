@@ -9,6 +9,7 @@ SimpleGraphAlgorithms = "41400c72-0c58-5c16-8579-4ecbce768449"
 SimpleGraphs = "55797a34-41de-5266-9ec1-32ac4eb504d3"
 
 [compat]
+SimpleGraphs = "0.7"
 Parameters = "0.12"
 julia = "1"
 
