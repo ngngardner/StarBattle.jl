@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.15
+# v0.12.16
 
 using Markdown
 using InteractiveUtils
@@ -12,6 +12,7 @@ begin
 	using BenchmarkTools
 	using DataFrames
 	using StarBattle
+	using Tables
 end
 
 # ╔═╡ e9ba30ee-3418-11eb-154d-07fa951d9808
@@ -33,12 +34,15 @@ end
 
 # ╔═╡ 4f983fc2-3418-11eb-16cc-fb68b374adcb
 begin	
-	input_file = "data/8puzzle2.data"
+	input_file = "data/5puzzle3.data"
 	k = 1
 	
 	df = CSV.read(input_file, DataFrame, header=false)
 	puzzle = convert(Matrix, df)
 end
+
+# ╔═╡ 0e8eec52-37f8-11eb-0530-bfe277c89f30
+adj, cells = adj_matrix(puzzle)
 
 # ╔═╡ 1f59446a-3405-11eb-266d-a5abba161174
 begin
@@ -48,6 +52,7 @@ end
 
 # ╔═╡ Cell order:
 # ╠═00cf0252-29f7-11eb-385c-97cb93db5e2f
-# ╠═e9ba30ee-3418-11eb-154d-07fa951d9808
+# ╟─e9ba30ee-3418-11eb-154d-07fa951d9808
 # ╠═4f983fc2-3418-11eb-16cc-fb68b374adcb
+# ╠═0e8eec52-37f8-11eb-0530-bfe277c89f30
 # ╠═1f59446a-3405-11eb-266d-a5abba161174

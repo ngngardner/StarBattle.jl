@@ -1,6 +1,9 @@
+for the puzzles with no ID, they weren't saved during the transcription process.
+
 1-star 5x5 normal
 5puzzle1
 5puzzle2
+5puzzle3: 1,195,620
 
 1-star 6x6 hard
 6puzzle1: 6,230,236
