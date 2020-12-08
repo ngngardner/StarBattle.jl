@@ -10,20 +10,40 @@ in Julia.
 
 ## Install
 
-`using Pkg; Pkg.add(url="https://github.com/ngngardner/StarBattle.jl")`
+Dependencies required to run both notebooks:
+- BenchmarkTools
+- CSV
+- DataFrames
+- Parameters
+- Revise
+- SimpleGraphs
+- SimpleGraphAlgorithms
+- Tables
+
+```
+# Install dependencies...
+# press ']' in the julia REPL to enter the package interface
+# then run the following:
+
+add BenchmarkTools
+add CSV
+add DataFrames
+add Parameters
+add Revise
+add SimpleGraphs
+add SimpleGraphAlgorithms
+add Tables
+```
 
 ## Usage
 
+Notebooks can be run using Pluto.
+
 ```
-import CSV
-using DataFrames
-using StarBattle
+# exit the package interface with 'backspace'
+using Pluto
+Pluto.run()
 
-df = CSV.read("data/10puzzle1.data")
-puzzle = convert(Matrix, df)
-k = 2
-
-result = solve(puzzle, k)
+# then, select Graphs.notebook.jl to investigate the graph-based solver,
+# or notebook.jl to investigate the backtracking algorithms
 ```
-
-Other examples can be seen in the notebook branch.
